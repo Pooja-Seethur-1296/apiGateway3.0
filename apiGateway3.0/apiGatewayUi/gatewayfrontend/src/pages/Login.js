@@ -13,16 +13,15 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
-
     try {
       const res = await loginUser({
-        email: data.get("email"),
+        emailId: data.get("email"),
         password: data.get("password"),
       });
       login(res.data);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      setError(err.response?.data?.responseDescription || "Login failed");
     }
   };
 

@@ -247,21 +247,20 @@ router.post("/getDetails", checkAuth, (req, res) => {
 /************Handle post request for login************/
 
 router.post("/login", async (req, res, next) => {
+  console.log(req.body);
   let users = await User.find({ emailId: req.body.emailId });
 
-  //console.log(users.length)
   if (users.length === 0) {
     return res.status(errorConfig.successMessageCode).json({
-      responseCode: errorConfig.unAuthorizedCode,
-      responseDescription: errorConfig.unAuthorizedMsg,
+      responseCode: 404,
+      responseDescription: "User not found",
     });
   }
-
   //Compare passwords and issue the token
   try {
     bcrypt.compare(req.body.password, users[0].password, (err, result) => {
       const { SECRET_KEY } = process.env;
-
+      console.log(result);
       if (result) {
         const token = jwt.sign(
           {
@@ -281,7 +280,11 @@ router.post("/login", async (req, res, next) => {
           responseDescription: "Auth succeeded",
           responseObject: {
             authToken: token,
-            rolesForUser: response.data.responseObject,
+            userDetails: {
+              userName: users[0].userName,
+              userRole: users[0].userRole,
+              userId: users[0]._id,
+            },
           },
         });
       }

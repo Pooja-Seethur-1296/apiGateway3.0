@@ -1,12 +1,26 @@
-import { TextField, Button, Stack, Link, MenuItem } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Stack,
+  Link,
+  MenuItem,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { registerUser } from "../api/authApi";
 
 export default function Register() {
   const navigate = useNavigate();
   const [role, setRole] = useState("user");
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -15,10 +29,15 @@ export default function Register() {
       userName: data.get("name"),
       emailId: data.get("email"),
       password: data.get("password"),
-      role: data.get("userRole"),
-      adminSecret: "sharedAdminSecret",
+      userRole: data.get("role"),
+      adminSecret: data.get("adminSecret") || "",
     });
 
+    setSnackbar({
+      open: true,
+      message: "Registration successful!",
+      severity: "success",
+    });
     navigate("/");
   };
 
@@ -28,16 +47,25 @@ export default function Register() {
         <Stack spacing={2}>
           <TextField name="name" label="Name" required />
           <TextField name="email" label="Email" required />
-          <TextField name="role" label="Role" select required>
-            <MenuItem value="user">User</MenuItem>
-            <MenuItem value="infiniteUser">Infinte user</MenuItem>
-            <MenuItem value="superAdmin">Super admin</MenuItem>
+
+          <TextField
+            name="role"
+            label="Role"
+            select
+            required
+            value={role}
             onChange={(e) => setRole(e.target.value)}
+          >
+            <MenuItem value="user">User</MenuItem>
+            <MenuItem value="infiniteUser">Infinite user</MenuItem>
+            <MenuItem value="superAdmin">Super admin</MenuItem>
           </TextField>
-          {/* Email shown only if admin selected */}
+
+          {/* Admin Secret only for Super Admin */}
           {role === "superAdmin" && (
-            <TextField name="adminSecret" label="adminSecret" required />
+            <TextField name="adminSecret" label="Admin Secret" required />
           )}
+
           <TextField
             name="password"
             label="Password"
@@ -54,6 +82,19 @@ export default function Register() {
           </Link>
         </Stack>
       </form>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </AuthLayout>
   );
 }
