@@ -13,7 +13,11 @@ const mongoose = require("mongoose");
 let userSchema = new mongoose.Schema({
   _userUniqueId: mongoose.Schema.Types.ObjectId,
   userName: { type: String, required: true },
-  userRole: { type: String, required: true },
+  userRole: {
+    type: String,
+    required: true,
+    enum: ["superAdmin", "admin", "user", "infinteUser"],
+  },
   emailId: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });
