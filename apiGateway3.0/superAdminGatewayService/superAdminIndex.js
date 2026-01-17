@@ -63,6 +63,9 @@ app.use("/user", userRoutes);
 const projectRoutes = require("./routes/projects");
 app.use("/project", projectRoutes);
 
+const userProjectRoutes = require("./routes/userProject");
+app.use("/userProjectMap", userProjectRoutes);
+
 // const endPointRoutes = require('./routes/endPointRoute');
 // app.use('/endPoint', endPointRoutes);
 

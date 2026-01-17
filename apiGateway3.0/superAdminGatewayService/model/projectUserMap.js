@@ -13,7 +13,7 @@ const mongoose = require("mongoose");
 let projectUserSchema = new mongoose.Schema({
   _id: mongoose.Schema.Types.ObjectId,
   userId: { type: String, required: true },
-  projectId: { type: String, required: true },
+  userName: { type: String, required: true },
   projectName: { type: String, required: true },
   projectCode: { type: String, required: true },
   userProjectRole: {

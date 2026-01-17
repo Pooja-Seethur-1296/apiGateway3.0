@@ -222,21 +222,26 @@ router.post("/getDetails", checkAuth, (req, res) => {
  * description: gets the list of all users in user collection.
  ***************************************************************/
 
-// router.get('/getList', checkAuth, (req, res) => {
-
-//     User.find().select('-password')
-//         .then(result => {
-//             res.status(errorConfig.successMessageCode).json({
-//                 responseCode: errorConfig.successMessageCode,
-//                 responseDescription: "List of users",
-//                 responseObject: {users: result}
-//             });
-//         })
-//         .catch(err => {
-//             console.log(err);
-//             return res.status(errorConfig.generalDbErrorCode).json({responseCode: errorConfig.generalDbErrorCode, responseDescription: errorConfig.generalDbErrorMsg});
-//         })
-// });
+router.get("/getList", checkAuth, (req, res) => {
+  User.find()
+    .select("-password")
+    .then((result) => {
+      res.status(errorConfig.successMessageCode).json({
+        responseCode: errorConfig.successMessageCode,
+        responseDescription: "List of users",
+        responseObject: { users: result },
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      return res
+        .status(errorConfig.generalDbErrorCode)
+        .json({
+          responseCode: errorConfig.generalDbErrorCode,
+          responseDescription: errorConfig.generalDbErrorMsg,
+        });
+    });
+});
 
 /***************************************************************
  * name : login
