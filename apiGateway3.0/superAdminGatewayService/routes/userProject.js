@@ -24,16 +24,16 @@ router.post("/mapProjectsToUser", checkAuth, (req, res) => {
   console.log(req.body);
 
   if (
-    req.body.userId === "" ||
-    req.body.userId === null ||
-    req.body.projects.length === 0
+    // req.body.userId === "" ||
+    // req.body.userId === null ||
+    req.body.length === 0
   ) {
     return res.status(errorConfig.successMessageCode).json({
       responseCode: errorConfig.badRequestCode,
       responseDescription: errorConfig.badRequestMsg,
     });
   } else {
-    let incomingProjectsArray = req.body.projects;
+    let incomingProjectsArray = req.body;
     let outGoingProjectsArray = [];
     let addCount = 0;
 
@@ -139,6 +139,23 @@ router.post("/modifyProjectsOfUser", checkAuth, (req, res) => {
           responseDescription: errorConfig.generalDbErrorMsg,
         });
       });
+  }
+});
+
+router.post("/getProjectsOfUser", checkAuth, async (req, res) => {
+  let resData = await projectUserDetail.find({ userId: req.body.userId });
+  if (resData.length === 0) {
+    console.log("No projects mapped");
+    return res.status(errorConfig.successMessageCode).json({
+      responseCode: errorConfig.notFoundErrorCode,
+      responseDescription: "No projects mapped to given user",
+    });
+  } else {
+    return res.status(errorConfig.successMessageCode).json({
+      responseCode: errorConfig.successMessageCode,
+      responseDescription: "Projects mapped to given user",
+      responseObject: resData,
+    });
   }
 });
 

@@ -19,7 +19,19 @@ export default function Login() {
         password: data.get("password"),
       });
       login(res.data);
-      navigate("/dashboard");
+      console.log(res.data.responseCode);
+      console.log(res.data.responseObject.userDetails.userRole);
+      if (
+        (res.data.responseCode === 200) &
+        (res.data.responseObject.userDetails.userRole === "superAdmin")
+      ) {
+        navigate("/dashboard");
+      } else if (
+        (res.data.responseCode === 200) &
+        (res.data.responseObject.userDetails.userRole === "admin")
+      ) {
+        navigate("/adminDashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.responseDescription || "Login failed");
     }

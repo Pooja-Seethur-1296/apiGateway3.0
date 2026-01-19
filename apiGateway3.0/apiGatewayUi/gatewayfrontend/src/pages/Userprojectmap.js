@@ -110,11 +110,11 @@ const ProjectMappingWithRole = () => {
             projectCode: project.projectCode,
             userProjectRole: val.role,
             userName: selectedUser.userName,
-            userId: selectedUser.userId,
+            userId: selectedUserId,
           };
         });
 
-      await userProjectMap({ projects: payload });
+      await userProjectMap(payload);
 
       setAlert({
         show: true,
