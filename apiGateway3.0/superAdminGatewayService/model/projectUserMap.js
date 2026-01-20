@@ -16,10 +16,10 @@ let projectUserSchema = new mongoose.Schema({
   userName: { type: String, required: true },
   projectName: { type: String, required: true },
   projectCode: { type: String, required: true },
-  userProjectRole: {
+  userRole: {
     type: String,
     required: true,
-    enum: ["projectAdmin", "editor", "user", "inHouseUser"],
+    enum: ["superAdmin", "admin", "user", "infinteUser"],
   },
 });
 

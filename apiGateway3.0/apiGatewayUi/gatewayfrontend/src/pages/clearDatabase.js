@@ -1,7 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
 import { TextField, Button, Stack, MenuItem } from "@mui/material";
 import { AuthContext } from "../context/AuthContext";
-import { getUserList, getProjectList, userProjectMap } from "../api/authApi";
+import {
+  getUserList,
+  getProjectList,
+  userProjectMap,
+  getProjectsMappedToUser,
+} from "../api/authApi";
 
 const FlushDb = () => {
   const { user, updateUser } = useContext(AuthContext);
@@ -24,6 +29,7 @@ const FlushDb = () => {
         name: user.userName,
         email: user.email || "",
         userRole: user.userRole,
+        userId: user._id,
       });
       fetchMappedProjects();
       fetchCounts();
@@ -32,8 +38,8 @@ const FlushDb = () => {
 
   const fetchMappedProjects = async () => {
     try {
-      const res = await userProjectMap(user.userId);
-      setMappedProjects(res.data.responseObject.projects);
+      const res = await getProjectsMappedToUser({ userId: user.userId });
+      setMappedProjects(res.data.responseObject);
     } catch (err) {
       console.error("Failed to fetch mapped projects", err);
     }
@@ -72,8 +78,8 @@ const FlushDb = () => {
           onChange={(e) => setSelectedProject(e.target.value)}
         >
           {mappedProjects.map((project) => (
-            <MenuItem key={project.id} value={project.id}>
-              {project.name}
+            <MenuItem key={project.projectId} value={project.projectCode}>
+              {project.projectName}
             </MenuItem>
           ))}
         </TextField>

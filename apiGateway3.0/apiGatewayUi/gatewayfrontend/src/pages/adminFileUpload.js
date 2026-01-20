@@ -1,194 +1,354 @@
-import React, { useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { FaFileExcel, FaCloudUploadAlt } from "react-icons/fa";
+// import React, { useContext, useEffect, useState } from "react";
+// import {
+//   Box,
+//   Button,
+//   MenuItem,
+//   TextField,
+//   Typography,
+//   Paper,
+//   LinearProgress,
+// } from "@mui/material";
+// import { FaFileExcel, FaCloudUploadAlt } from "react-icons/fa";
+// import { AuthContext } from "../context/AuthContext";
+// import { getProjectsMappedToUser } from "../api/authApi";
 
-const Adminfileupload = () => {
+// const AdminFileUpload = () => {
+//   const { user } = useContext(AuthContext);
+
+//   const [mappedProjects, setMappedProjects] = useState([]);
+//   const [selectedProject, setSelectedProject] = useState("");
+//   const [file, setFile] = useState(null);
+//   const [progress, setProgress] = useState(0);
+//   const [message, setMessage] = useState("");
+
+//   /* ---------------- FETCH PROJECTS ---------------- */
+
+//   useEffect(() => {
+//     if (user?.userId) {
+//       fetchMappedProjects();
+//     }
+//   }, [user]);
+
+//   const fetchMappedProjects = async () => {
+//     try {
+//       const res = await getProjectsMappedToUser({ userId: user.userId });
+//       setMappedProjects(res.data.responseObject || []);
+//     } catch {
+//       setMessage("Failed to load projects");
+//     }
+//   };
+
+//   /* ---------------- FILE HANDLING ---------------- */
+
+//   const validateFile = (file) => {
+//     if (!file) return false;
+//     return (
+//       file.type ===
+//         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+//       file.type === "application/vnd.ms-excel"
+//     );
+//   };
+
+//   const handleFileSelect = (file) => {
+//     if (!validateFile(file)) {
+//       setMessage("Only Excel files (.xls, .xlsx) are allowed");
+//       setFile(null);
+//       return;
+//     }
+
+//     setFile(file);
+//     setMessage("");
+//     setProgress(0);
+//   };
+
+//   /* ---------------- UPLOAD ---------------- */
+
+//   const handleUpload = async () => {
+//     if (!file || !selectedProject) {
+//       setMessage("Please select project and file");
+//       return;
+//     }
+
+//     // Mock progress (replace with real API progress)
+//     let value = 0;
+//     const interval = setInterval(() => {
+//       value += 20;
+//       setProgress(value);
+//       if (value >= 100) {
+//         clearInterval(interval);
+//         setMessage("File uploaded successfully");
+//       }
+//     }, 300);
+//   };
+
+//   /* ---------------- UI ---------------- */
+
+//   return (
+//     <Box sx={{ p: 4 }}>
+//       <Typography variant="h5" mb={3}>
+//         Upload Project Data
+//       </Typography>
+
+//       {/* PROJECT SELECT */}
+//       <Box sx={{ maxWidth: 360, mb: 3 }}>
+//         <TextField
+//           select
+//           fullWidth
+//           label="Select Project"
+//           size="small"
+//           value={selectedProject}
+//           onChange={(e) => setSelectedProject(e.target.value)}
+//         >
+//           {mappedProjects.map((project) => (
+//             <MenuItem key={project.projectId} value={project.projectCode}>
+//               {project.projectName}
+//             </MenuItem>
+//           ))}
+//         </TextField>
+//       </Box>
+
+//       {/* UPLOAD CARD */}
+//       <Paper
+//         elevation={4}
+//         sx={{
+//           maxWidth: 420,
+//           p: 4,
+//           textAlign: "center",
+//           borderRadius: 3,
+//         }}
+//       >
+//         <FaCloudUploadAlt size={56} color="#1976d2" />
+
+//         <Typography variant="h6" mt={2}>
+//           Upload Excel File
+//         </Typography>
+
+//         <Typography variant="body2" color="text.secondary" mb={2}>
+//           Supported formats: .xls, .xlsx
+//         </Typography>
+
+//         <input
+//           type="file"
+//           accept=".xls,.xlsx"
+//           hidden
+//           id="excel-upload"
+//           onChange={(e) => handleFileSelect(e.target.files[0])}
+//         />
+
+//         <label htmlFor="excel-upload">
+//           <Button variant="outlined" component="span" sx={{ mt: 1 }}>
+//             Browse File
+//           </Button>
+//         </label>
+
+//         {file && (
+//           <Box
+//             sx={{
+//               mt: 2,
+//               display: "flex",
+//               alignItems: "center",
+//               justifyContent: "center",
+//               gap: 1,
+//               color: "#1976d2",
+//               fontWeight: 500,
+//             }}
+//           >
+//             <FaFileExcel />
+//             <Typography variant="body2">{file.name}</Typography>
+//           </Box>
+//         )}
+
+//         {progress > 0 && (
+//           <Box sx={{ mt: 2 }}>
+//             <LinearProgress variant="determinate" value={progress} />
+//           </Box>
+//         )}
+
+//         <Button
+//           fullWidth
+//           variant="contained"
+//           sx={{ mt: 3 }}
+//           disabled={!file || !selectedProject}
+//           onClick={handleUpload}
+//         >
+//           Upload
+//         </Button>
+
+//         {message && (
+//           <Typography variant="body2" color="text.secondary" mt={2}>
+//             {message}
+//           </Typography>
+//         )}
+//       </Paper>
+//     </Box>
+//   );
+// };
+
+// export default AdminFileUpload;
+
+import React, { useContext, useEffect, useState } from "react";
+import {
+  Box,
+  Button,
+  MenuItem,
+  TextField,
+  Typography,
+  Paper,
+  LinearProgress,
+  Stack,
+} from "@mui/material";
+import { FaFileExcel } from "react-icons/fa";
+import { AuthContext } from "../context/AuthContext";
+import { getProjectsMappedToUser } from "../api/authApi";
+
+const AdminFileUpload = () => {
   const { user } = useContext(AuthContext);
-  const [projects, setProjects] = useState([]);
+
+  const [mappedProjects, setMappedProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState("");
   const [file, setFile] = useState(null);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("");
-  const [dragActive, setDragActive] = useState(false);
 
-  const handleFile = (file) => {
-    if (!validateFile(file)) {
-      setMessage("❌ Only Excel files are allowed");
+  /* ---------------- FETCH PROJECTS ---------------- */
+
+  useEffect(() => {
+    if (user?.userId) fetchMappedProjects();
+  }, [user]);
+
+  const fetchMappedProjects = async () => {
+    const res = await getProjectsMappedToUser({ userId: user.userId });
+    setMappedProjects(res.data.responseObject || []);
+  };
+
+  /* ---------------- FILE HANDLING ---------------- */
+
+  const handleFileSelect = (file) => {
+    if (!file) return;
+
+    const valid =
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      file.type === "application/vnd.ms-excel";
+
+    if (!valid) {
+      setMessage("Only Excel files (.xls, .xlsx) allowed");
       return;
     }
+
     setFile(file);
     setMessage("");
+    setProgress(0);
   };
 
-  const validateFile = (file) => {
-    if (!file) return false;
+  /* ---------------- UPLOAD ---------------- */
 
-    const allowedTypes = [
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "application/vnd.ms-excel",
-    ];
-    return allowedTypes.includes(file.type);
-  };
-
-  const handleUpload = async () => {
-    if (!file) {
-      setMessage("❌ Please select a file first");
+  const handleUpload = () => {
+    if (!file || !selectedProject) {
+      setMessage("Select project and file");
       return;
     }
 
-    // TODO: implement API upload
-    setMessage("✅ File ready to upload");
+    // Mock progress
+    let value = 0;
+    const interval = setInterval(() => {
+      value += 25;
+      setProgress(value);
+      if (value >= 100) {
+        clearInterval(interval);
+        setMessage("File uploaded successfully");
+      }
+    }, 250);
   };
 
-  return (
-    <main style={styles.main}>
-      <div style={styles.uploadWrapper}>
-        <div
-          style={{
-            ...styles.uploadCard,
-            border: dragActive
-              ? "2px dashed #2f58ea"
-              : "2px dashed transparent",
-            background: dragActive ? "#f6fff6" : "#fff",
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragActive(false);
-            handleFile(e.dataTransfer.files[0]);
-          }}
-        >
-          <FaCloudUploadAlt style={styles.uploadIcon} />
-          <h3>Upload Excel File</h3>
-          <p>Drag & drop your Excel file here</p>
+  /* ---------------- UI ---------------- */
 
+  return (
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h5" mb={2}>
+        Upload Project File
+      </Typography>
+
+      <Paper sx={{ p: 2 }}>
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          alignItems="center"
+        >
+          {/* PROJECT SELECT */}
+          <TextField
+            select
+            size="small"
+            label="Project"
+            sx={{ minWidth: 200 }}
+            value={selectedProject}
+            onChange={(e) => setSelectedProject(e.target.value)}
+          >
+            {mappedProjects.map((project) => (
+              <MenuItem key={project.projectId} value={project.projectCode}>
+                {project.projectName}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          {/* FILE PICKER */}
           <input
             type="file"
             accept=".xls,.xlsx"
             hidden
-            id="excelUpload"
-            onChange={(e) => handleFile(e.target.files[0])}
+            id="excel-upload"
+            onChange={(e) => handleFileSelect(e.target.files[0])}
           />
 
-          <label htmlFor="excelUpload" style={styles.browseBtn}>
-            Browse File
+          <label htmlFor="excel-upload">
+            <Button
+              variant="outlined"
+              component="span"
+              startIcon={<FaFileExcel />}
+            >
+              Choose File
+            </Button>
           </label>
 
-          {file && (
-            <div style={styles.filePreview}>
-              <FaFileExcel />
-              <span>{file.name}</span>
-            </div>
-          )}
-
-          {progress > 0 && (
-            <div style={styles.progressBar}>
-              <div style={{ ...styles.progressInner, width: `${progress}%` }} />
-            </div>
-          )}
-
-          <button
-            style={{
-              ...styles.uploadBtn,
-              background: file ? "#2f58ea" : "#bdbdbd",
+          {/* FILE NAME */}
+          <Typography
+            variant="body2"
+            sx={{
+              flex: 1,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
-            disabled={!file}
+          >
+            {file ? file.name : "No file selected"}
+          </Typography>
+
+          {/* UPLOAD */}
+          <Button
+            variant="contained"
+            disabled={!file || !selectedProject}
             onClick={handleUpload}
           >
             Upload
-          </button>
+          </Button>
+        </Stack>
 
-          {message && <p style={styles.status}>{message}</p>}
-        </div>
-      </div>
-    </main>
+        {/* PROGRESS */}
+        {progress > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <LinearProgress variant="determinate" value={progress} />
+          </Box>
+        )}
+
+        {/* STATUS */}
+        {message && (
+          <Typography variant="body2" sx={{ mt: 1 }}>
+            {message}
+          </Typography>
+        )}
+      </Paper>
+    </Box>
   );
 };
 
-const styles = {
-  main: {
-    padding: "25px",
-  },
-
-  welcomeText: {
-    fontSize: "16px",
-    fontWeight: 500,
-    marginBottom: "20px",
-    color: "#334155",
-  },
-
-  uploadWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    marginTop: "30px",
-  },
-
-  uploadCard: {
-    width: "420px",
-    padding: "30px",
-    borderRadius: "16px",
-    boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
-    textAlign: "center",
-    transition: "0.3s",
-  },
-
-  uploadIcon: {
-    fontSize: "60px",
-    color: "#2f58ea",
-  },
-
-  browseBtn: {
-    display: "inline-block",
-    marginTop: "15px",
-    padding: "10px 22px",
-    borderRadius: "8px",
-    background: "#2f58ea",
-    color: "white",
-    cursor: "pointer",
-  },
-
-  filePreview: {
-    marginTop: "15px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-    color: "#2f58ea",
-    fontWeight: 500,
-  },
-
-  progressBar: {
-    marginTop: "15px",
-    height: "8px",
-    background: "#e0e0e0",
-    borderRadius: "10px",
-    overflow: "hidden",
-  },
-
-  progressInner: {
-    height: "100%",
-    background: "#2f58ea",
-    transition: "width 0.3s",
-  },
-
-  uploadBtn: {
-    marginTop: "20px",
-    width: "100%",
-    padding: "12px",
-    borderRadius: "10px",
-    border: "none",
-    color: "white",
-    fontSize: "16px",
-    cursor: "pointer",
-  },
-
-  status: {
-    marginTop: "10px",
-    fontWeight: 500,
-  },
-};
-
-export default Adminfileupload;
+export default AdminFileUpload;

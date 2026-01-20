@@ -42,9 +42,9 @@ router.post("/mapProjectsToUser", checkAuth, (req, res) => {
         _id: new mongoose.Types.ObjectId(),
         projectName: incomingProjectsArray[addCount].projectName,
         projectCode: incomingProjectsArray[addCount].projectCode,
-        userProjectRole: incomingProjectsArray[addCount].userProjectRole,
-        userName: req.body.userName,
-        userId: req.body.userId,
+        userRole: incomingProjectsArray[addCount].userRole,
+        userName: incomingProjectsArray[addCount].userName,
+        userId: incomingProjectsArray[addCount].userId,
       });
       projectRoleMaps
         .save()

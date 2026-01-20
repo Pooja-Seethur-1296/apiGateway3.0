@@ -1,7 +1,12 @@
 import React, { useState, useContext, useEffect } from "react";
 import { TextField, Button, Stack, MenuItem } from "@mui/material";
 import { AuthContext } from "../context/AuthContext";
-import { getUserList, getProjectList, userProjectMap } from "../api/authApi";
+import {
+  getUserList,
+  getProjectList,
+  userProjectMap,
+  getProjectsMappedToUser,
+} from "../api/authApi";
 
 const Admindashboard = () => {
   const { user, updateUser } = useContext(AuthContext);
@@ -33,8 +38,8 @@ const Admindashboard = () => {
 
   const fetchMappedProjects = async () => {
     try {
-      const res = await userProjectMap(user.userId);
-      setMappedProjects(res.data.responseObject.projects);
+      const res = await getProjectsMappedToUser({ userId: user.userId });
+      setMappedProjects(res.data.responseObject);
     } catch (err) {
       console.error("Failed to fetch mapped projects", err);
     }
@@ -74,8 +79,8 @@ const Admindashboard = () => {
           value={selectedProject}
           onChange={(e) => setSelectedProject(e.target.value)}
         >
-          {projects.map((project) => (
-            <MenuItem key={project._id} value={project.projectCode}>
+          {mappedProjects.map((project) => (
+            <MenuItem key={project.projectId} value={project.projectCode}>
               {project.projectName}
             </MenuItem>
           ))}

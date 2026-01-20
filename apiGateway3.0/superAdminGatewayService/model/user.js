@@ -18,6 +18,7 @@ let userSchema = new mongoose.Schema({
     required: true,
     enum: ["superAdmin", "admin", "user", "infinteUser"],
   },
+  secretKey: { type: String },
   emailId: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 });

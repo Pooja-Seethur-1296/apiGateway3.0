@@ -13,38 +13,50 @@ const mongoose = require("mongoose");
 
 module.exports = async (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, process.env.SECRET_KEY);
-  req.userData = decoded;
-  // console.log("User ID: ", decoded.userId);
-
-  let userInDb = await User.find({
-    _id: new mongoose.Types.ObjectId(decoded.userId),
-  });
-
-  if (userInDb.length === 0) {
-    console.log("No User");
-    return res.status(errorConfig.unAuthorizedCode).json({
-      statusCode: errorConfig.unAuthorizedCode,
-      message:
-        "Unauthorized access, either user does not exist or inactive, or invalid/malicious access",
+  if (!token) {
+    return {
+      responseCode: errorConfig.unAuthorizedCode,
+      responseDescription: "Token is missing, please login",
+    };
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    req.userData = decoded;
+    let userInDb = await User.find({
+      _id: new mongoose.Types.ObjectId(decoded.userId),
     });
-  } else if (userInDb.length > 0) {
-    console.log("User exists");
-    var now = Math.floor(Date.now() / 1000);
-    if (now > decoded.exp) {
-      console.log("why?");
+    if (userInDb.length === 0) {
+      console.log("No User");
       return res.status(errorConfig.unAuthorizedCode).json({
-        statusCode: errorConfig.unAuthorizedCode,
-        message: "Token expired",
+        responseCode: errorConfig.unAuthorizedCode,
+        responseDescription: "User not found, create one",
       });
-    } else {
-      console.log("Not expired");
-      next();
-      return;
+    } else if (userInDb.length > 0) {
+      var now = Math.floor(Date.now() / 1000);
+      if (now > decoded.exp) {
+        console.log("why?");
+        return res.status(errorConfig.unAuthorizedCode).json({
+          responseCode: errorConfig.unAuthorizedCode,
+          responseDescription: "Token expired",
+        });
+      } else {
+        console.log("Valid token");
+        next();
+        return;
+      }
     }
-  } else {
-    console.log("Authorized");
-    next();
-    return;
+  } catch (err) {
+    // console.log("bantu");
+    // console.log(err);
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({
+        responseCode: errorConfig.unAuthorizedCode,
+        responseDescription: "Token expired",
+      }); // Return 401 for expired token
+    }
+    return res.status(401).json({
+      responseCode: errorConfig.unAuthorizedCode,
+      responseDescription: "Invalid token",
+    });
   }
 };

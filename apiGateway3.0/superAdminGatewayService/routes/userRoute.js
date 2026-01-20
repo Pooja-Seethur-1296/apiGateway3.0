@@ -15,6 +15,8 @@ const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const checkAuth = require("../middleWare/checkAuth");
 const errorConfig = require("../errorConfig/errorConfig");
+const config = require("../config/db");
+const generator = require("generate-password");
 
 /***************************************************************
  * name : add
@@ -22,7 +24,7 @@ const errorConfig = require("../errorConfig/errorConfig");
  *               DB and hashes the password for security
  ***************************************************************/
 
-router.post("/add", (req, res, next) => {
+router.post("/add", async (req, res, next) => {
   var verifiedRole = req.body.userRole;
   if (req.body.password === "" || req.body.password === null) {
     return res.status(errorConfig.successMessageCode).json({
@@ -30,55 +32,82 @@ router.post("/add", (req, res, next) => {
       responseDescription: errorConfig.badRequestMsg,
     });
   } else {
-    bcrypt.hash(req.body.password, 10, (err, hash) => {
-      if (err) {
-        return res.status(errorConfig.successMessageCode).json({
-          responseCode: errorConfig.generalDbErrorCode,
-          responseDescription: "password hashing error",
+    if (req.body.userRole === "superAdmin") {
+      var password = req.body.password;
+    } else {
+      //generate password and secret key and mail them
+      password = generator.generate({
+        length: 10,
+        numbers: true,
+      });
+      if (req.body.userRole === "superAdmin" || req.body.userRole === "admin") {
+        var generatedSecretKey = generator.generate({
+          length: 10,
+          numbers: true,
+          symbols: true,
+          uppercase: true,
+          strict: true,
         });
       } else {
-        if (req.body.adminSecret === "sharedAdminSecret") {
-          verifiedRole = "admin";
-        }
-        const user = new User({
-          _id: new mongoose.Types.ObjectId(),
-          userName: req.body.userName,
-          emailId: req.body.emailId,
-          userRole: req.body.userRole,
-          password: hash,
-        });
-
-        user
-          .save()
-          .then((result) => {
-            res.status(errorConfig.successMessageCode).json({
-              responseCode: errorConfig.createdCode,
-              responseDescription: "User added successfully",
-              responseObject: {
-                userId: result._id,
-                userName: result.userName,
-                emailId: result.emailId,
-                userRole: result.userRole,
-              },
-            });
-          })
-          .catch((err) => {
-            console.log(err);
-            if (err.code === 11000) {
-              return res.status(errorConfig.successMessageCode).json({
-                responseCode: errorConfig.dataDuplicationErrorCode,
-                responseDescription: errorConfig.dataDuplicationErrorMsg,
-                keyValue: err.keyValue,
-              });
-            } else {
-              return res.status(errorConfig.generalDbErrorCode).json({
-                responseCode: errorConfig.generalDbErrorCode,
-                responseDescription: errorConfig.generalDbErrorMsg,
-              });
-            }
-          });
+        generatedSecretKey = "";
       }
+    }
+    let hash = await bcrypt.hash(password, 10);
+    const user = new User({
+      _id: new mongoose.Types.ObjectId(),
+      userName: req.body.userName,
+      emailId: req.body.emailId,
+      userRole: req.body.userRole,
+      secretKey: generatedSecretKey,
+      password: hash,
     });
+
+    user
+      .save()
+      .then((result) => {
+        //send email regardless
+        config.sendMail(
+          req.body.emailId,
+          "API gateway registration: ",
+          `Dear ${req.body.userName},<br><br>
+        You have been successfully registered as ${req.body.userRole} in the API gateway. Your login credentials are:<br><br>
+        <b>Username:</b> ${req.body.userName}<br>
+        <b>Email:</b> ${req.body.emailId}<br>
+        <b>Your Admin secret key: ${generatedSecretKey} (If you are not admin, ignore this key)<br>
+        <b>Password:</b> ${password}<br><br>
+        Please use the above credentials to login to the portal/app.${config.gatewayPortalLink}<br><br>
+        If you have any questions or need assistance, feel free to contact us.<br><br>
+        Thank you for being a part of our community!<br><br>
+        Best regards,<br>
+        Team Ortusolis
+        `,
+        );
+        return res.status(errorConfig.successMessageCode).json({
+          responseCode: errorConfig.createdCode,
+          responseDescription: "User added successfully",
+          responseObject: {
+            userId: result._id,
+            userName: result.userName,
+            emailId: result.emailId,
+            userRole: result.userRole,
+          },
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        if (err.code === 11000) {
+          return res.status(errorConfig.successMessageCode).json({
+            responseCode: errorConfig.dataDuplicationErrorCode,
+            responseDescription: errorConfig.dataDuplicationErrorMsg,
+            keyValue: err.keyValue,
+          });
+        } else {
+          return res.status(errorConfig.generalDbErrorCode).json({
+            responseCode: errorConfig.generalDbErrorCode,
+            responseDescription: errorConfig.generalDbErrorMsg,
+          });
+        }
+      });
   }
 });
 
@@ -156,7 +185,7 @@ router.post("/edit", checkAuth, async (req, res) => {
       }
       let updatedResult = await User.findOneAndUpdate(
         { phoneNumber: req.body.phoneNumber },
-        updatableData
+        updatableData,
       );
       console.log(updatedResult);
       if (updatedResult.modifiedCount === 0 || updatedResult === null) {
@@ -234,12 +263,10 @@ router.get("/getList", checkAuth, (req, res) => {
     })
     .catch((err) => {
       console.log(err);
-      return res
-        .status(errorConfig.generalDbErrorCode)
-        .json({
-          responseCode: errorConfig.generalDbErrorCode,
-          responseDescription: errorConfig.generalDbErrorMsg,
-        });
+      return res.status(errorConfig.generalDbErrorCode).json({
+        responseCode: errorConfig.generalDbErrorCode,
+        responseDescription: errorConfig.generalDbErrorMsg,
+      });
     });
 });
 
@@ -275,7 +302,7 @@ router.post("/login", async (req, res, next) => {
           {
             expiresIn: "2h",
             algorithm: "HS512",
-          }
+          },
         );
 
         console.log("Generated token: " + token);
@@ -329,7 +356,7 @@ router.post("/forgotPassword", (req, res) => {
         SECRET_KEY,
         {
           expiresIn: "10m",
-        }
+        },
       );
 
       let forgotPasswordLink = `${process.env.FORGOT_PASSWORD_URL}userId=${result[0]._id}&authToken=${passwordResetToken}`;
@@ -430,7 +457,7 @@ router.post("/resetPassword", checkAuth, (req, res) => {
             } else {
               User.findOneAndUpdate(
                 { _id: req.body.userId },
-                { password: hash }
+                { password: hash },
               )
                 .then((result) => {
                   res.status(errorConfig.successMessageCode).json({
