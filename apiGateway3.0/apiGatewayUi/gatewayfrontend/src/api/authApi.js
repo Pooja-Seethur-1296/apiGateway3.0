@@ -26,6 +26,7 @@ adminAPI.interceptors.request.use((req) => {
 
 export const loginUser = (data) => API.post("/user/login", data);
 export const registerUser = (data) => API.post("/user/add", data);
+export const deleteUser = (data) => API.post("/user/delete", data);
 export const getUserList = () => API.get("/user/getList");
 //project related APIs
 export const addProject = (data) => API.post("/project/addProject", data);
@@ -45,4 +46,13 @@ export const getProjectsMappedToUser = (data) =>
 //Admin functionalities
 export const getEpsMappedToProjects = (data) =>
   adminAPI.post("/getEndpointsOfProjects", data);
+export const uploadFile = (formData, config = {}) => {
+  // Return the axios promise so that caller can await it
+  return adminAPI.post("/uploadFile", formData, {
+    ...config, // allows onUploadProgress or extra headers
+  });
+};
+export const mapUserProjectEps = (data) =>
+  adminAPI.post("/mapUserEndPoints", data);
+export const flushDatabase = (data) => adminAPI.post("/flushRedis", data);
 export default API;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   TextField,
   MenuItem,
@@ -10,38 +10,73 @@ import {
   TableCell,
   TableContainer,
   Paper,
+  Box,
 } from "@mui/material";
-import { getProjectList, getEpsMappedToProjects } from "../api/authApi";
+import {
+  getEpsMappedToProjects,
+  getProjectsMappedToUser,
+} from "../api/authApi";
+import { AuthContext } from "../context/AuthContext";
+
+const cellStyle = {
+  maxWidth: 180,
+  whiteSpace: "normal",
+  wordBreak: "break-word",
+  fontSize: "0.85rem",
+  verticalAlign: "top",
+};
+
+const scrollBox = {
+  maxHeight: 120,
+  overflowY: "auto",
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+  fontFamily: "monospace",
+  fontSize: "0.75rem",
+  lineHeight: 1.4,
+  border: "1px solid #e0e0e0",
+  borderRadius: 1,
+  padding: 1,
+  backgroundColor: "#ffffff",
+};
 
 const ProjectEndpoints = () => {
-  const [projects, setProjects] = useState([]);
+  const { user } = useContext(AuthContext);
+
+  const [mappedProjects, setMappedProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState("");
   const [endpoints, setEndpoints] = useState([]);
 
-  // Fetch all projects on mount
+  /* ---------------- FETCH MAPPED PROJECTS ---------------- */
+
   useEffect(() => {
-    const fetchProjects = async () => {
+    if (!user?.userId) return;
+
+    const fetchMappedProjects = async () => {
       try {
-        const res = await getProjectList();
-        console.log(res.data);
-        setProjects(res.data.responseObject.projects || []);
+        const res = await getProjectsMappedToUser({ userId: user.userId });
+        setMappedProjects(res.data.responseObject || []);
       } catch (err) {
-        console.error("Failed to fetch projects", err);
+        console.error(err);
       }
     };
-    fetchProjects();
-  }, []);
 
-  // Fetch endpoints when project is selected
+    fetchMappedProjects();
+  }, [user]);
+
+  /* ---------------- FETCH ENDPOINTS ---------------- */
+
   useEffect(() => {
     if (!selectedProject) return;
 
     const fetchEndpoints = async () => {
       try {
-        const res = await getEpsMappedToProjects(selectedProject);
-        setEndpoints(res.data.responseObject.endPoints || []);
+        const res = await getEpsMappedToProjects({
+          projectCode: selectedProject,
+        });
+        setEndpoints(res.data.responseObject || []);
       } catch (err) {
-        console.error("Failed to fetch project endpoints", err);
+        console.error(err);
       }
     };
 
@@ -49,13 +84,13 @@ const ProjectEndpoints = () => {
   }, [selectedProject]);
 
   return (
-    <div style={{ padding: 24 }}>
+    <Box sx={{ p: 3 }}>
       <Typography variant="h5" mb={3}>
         Project Endpoints
       </Typography>
 
-      {/* Project Selector */}
-      <div style={{ maxWidth: 320, marginBottom: 24 }}>
+      {/* PROJECT SELECT */}
+      <Box sx={{ maxWidth: 320, mb: 3 }}>
         <TextField
           select
           label="Select Project"
@@ -64,55 +99,95 @@ const ProjectEndpoints = () => {
           value={selectedProject}
           onChange={(e) => setSelectedProject(e.target.value)}
         >
-          {projects.map((project) => (
+          {mappedProjects.map((project) => (
             <MenuItem key={project.projectId} value={project.projectCode}>
               {project.projectName}
             </MenuItem>
           ))}
         </TextField>
-      </div>
+      </Box>
 
-      {/* Endpoints Table */}
+      {/* ENDPOINT TABLE */}
       {selectedProject && (
         <TableContainer component={Paper}>
-          <Table>
+          <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Endpoint</TableCell>
-                <TableCell>Token</TableCell>
-                <TableCell>Project Code</TableCell>
-                <TableCell>Request Type</TableCell>
-                <TableCell>Sample Request</TableCell>
-                <TableCell>Description</TableCell>
+                {[
+                  "Endpoint",
+                  "Token",
+                  "Project Code",
+                  "Request Type",
+                  "Sample Request",
+                  "Description",
+                ].map((header) => (
+                  <TableCell
+                    key={header}
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: "#f1f5f9",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {endpoints.length === 0 && (
+              {endpoints.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
                     No endpoints available for this project
                   </TableCell>
                 </TableRow>
+              ) : (
+                endpoints.map((ep, idx) => (
+                  <TableRow
+                    key={idx}
+                    sx={{
+                      "&:hover": { backgroundColor: "#f9fafb" },
+                    }}
+                  >
+                    {/* Endpoint */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.endPoint}</Box>
+                    </TableCell>
+
+                    {/* Token */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.endPointToken}</Box>
+                    </TableCell>
+
+                    {/* Project Code */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.projectCode}</Box>
+                    </TableCell>
+
+                    {/* Request Type */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.requestType}</Box>
+                    </TableCell>
+
+                    {/* Sample Request */}
+                    <TableCell sx={{ maxWidth: 360, p: 1 }}>
+                      <Box sx={scrollBox}>{ep.sampleRequestSchema || "-"}</Box>
+                    </TableCell>
+
+                    {/* Description */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.description || "-"}</Box>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
-              {endpoints.map((ep, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{ep.endPoint}</TableCell>
-                  <TableCell>{ep.endPointToken}</TableCell>
-                  <TableCell>{ep.projectCode}</TableCell>
-                  <TableCell>{ep.requestType}</TableCell>
-                  <TableCell>
-                    <pre style={{ margin: 0 }}>
-                      {ep.sampleRequestSchema || "-"}
-                    </pre>
-                  </TableCell>
-                  <TableCell>{ep.description || "-"}</TableCell>
-                </TableRow>
-              ))}
             </TableBody>
           </Table>
         </TableContainer>
       )}
-    </div>
+    </Box>
   );
 };
 

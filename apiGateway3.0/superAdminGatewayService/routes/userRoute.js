@@ -131,7 +131,7 @@ router.post("/delete", checkAuth, async (req, res, next) => {
     } else {
       return res.status(errorConfig.successMessageCode).json({
         responseCode: errorConfig.successMessageCode,
-        responseDescription: "User deleted from both collections",
+        responseDescription: "User deleted successfully",
         responseObject: { userId: req.body.userId },
       });
     }

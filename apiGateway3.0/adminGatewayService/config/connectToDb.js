@@ -7,22 +7,23 @@
 /**
  * Include libraries and modules
  */
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 /**
  * @name {*} connect
- * @param {*} error 
+ * @param {*} error
  */
 
 module.exports.connect = (error) => {
-    mongoose.connect('mongodb://127.0.0.1:27017/apiGatewayDataBase', {                              // Connecting to actual API gateway database
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
+  mongoose.connect("mongodb://testserv.ortusolis.in:26045/apiGatewayDataBase", {
+    // Connecting to actual API gateway database
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
 
-    console.log("Successfully connected to database");
+  console.log("Successfully connected to database");
 
-    if (error) {
-        console.log("DB connection failed: " + error);
-    }
-}
+  if (error) {
+    console.log("DB connection failed: " + error);
+  }
+};

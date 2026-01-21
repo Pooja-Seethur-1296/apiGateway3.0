@@ -17,8 +17,10 @@ const redis = require("redis");
 const REDIS_PORT = 6379;
 const db = require("./config/connectToDb");
 const authorize = require("./config/authorize");
-const endPointSchema = require("../model/endPointList");
-const projectUsers = require("../model/projectUsers");
+const endPointSchema = require("./model/endPointList");
+const Users = require("./model/user");
+const projectUsers = require("./model/projectUsers");
+const cors = require("cors");
 
 /**
  * connect to mongo db
@@ -26,11 +28,21 @@ const projectUsers = require("../model/projectUsers");
 
 db.connect();
 
+// Configure CORS for a specific origin
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
+
 /**
  * Include middlewares
  */
 
-const client = redis.createClient(REDIS_PORT);
+const client = redis.createClient(6379);
+// const client = createClient({
+//   url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST_NAME}:6379`,
+// });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -67,6 +79,7 @@ var upload = multer({ storage: storage });
 
 const uploadXLSX = async (req, res, next) => {
   try {
+    console.log("Got request");
     //read contents of excel file
 
     var filePath = "./uploads/test.xlsx";
@@ -81,8 +94,8 @@ const uploadXLSX = async (req, res, next) => {
     configFunc.feedToMongoDb(jsonData, (result) => {
       if (result.length === 0) {
         return res.status(400).json({
-          success: false,
-          message: "xml sheet has no data",
+          responseCode: 400,
+          responseDescription: "xml sheet has no data",
         });
       }
 
@@ -91,13 +104,15 @@ const uploadXLSX = async (req, res, next) => {
       configFunc.deleteFile((operationResult) => {
         if (operationResult === "success") {
           res.status(201).json({
-            success: true,
-            message: result,
+            responseCode: 201,
+            responseDescription: "Data fed to database successfully",
+            responseObject: result,
           });
         } else if (operationResult === "error") {
-          res.status(201).json({
-            success: true,
-            message: "Data fed to mongodb, some error in handling file",
+          res.status(500).json({
+            responseCode: 500,
+            responseDescription:
+              "Data fed to mongodb, some error in handling file",
           });
         }
       });
@@ -113,14 +128,15 @@ const uploadXLSX = async (req, res, next) => {
  * @description {*} Uploads excel file, extracts data and stores them in mongo DB
  */
 
-app.post("/uploadFile", authorize, upload.single("myFile.xlsx"), uploadXLSX);
+app.post("/uploadFile", upload.single("myFile.xlsx"), uploadXLSX);
 
 /**
  * @name {*} mapUserEndPoints
  * @description {*} Extracts stored data from mongo DB, based on project code and updates in redis
  */
 
-app.post("/mapUserEndPoints", authorize, (req, res) => {
+app.post("/mapUserEndPoints", (req, res) => {
+  console.log(req.body.userId);
   console.log(req.body.projectCode, req.body.userId);
   configFunc.mongoAggregate(
     req.body.projectCode,
@@ -149,8 +165,14 @@ app.post("/mapUserEndPoints", authorize, (req, res) => {
  * @description {*} Caution: erases all the data in redis database. Perform with secret key only
  */
 
-app.post("/flushRedis", authorize, (req, res) => {
-  if (req.body.secretKey === "redisDataClearMadro") {
+app.post("/flushRedis", async (req, res) => {
+  console.log(req.body.userId);
+  let userSecretKey = await Users.find(
+    { _id: req.body.userId },
+    { secretKey: 1 },
+  );
+  console.log(userSecretKey);
+  if (req.body.secretKey === userSecretKey[0].secretKey) {
     client.del(req.body.userId, (err, succeeded) => {
       console.log(succeeded); // will be true if successfull
       if (err) {
@@ -163,6 +185,11 @@ app.post("/flushRedis", authorize, (req, res) => {
         responseCode: 200,
         responseDescription: "Deleted all data in redis",
       });
+    });
+  } else {
+    return res.status(404).json({
+      responseCode: 404,
+      responseDescription: "Wrong secret key",
     });
   }
 });
@@ -212,11 +239,12 @@ app.post("/apiAccessCountReset", authorize, (req, res) => {
  * @name: getEndpointsOfProjects
  * @description: gets all the endpoints mapped to the user
  */
-app.post("/getEndpointsOfProjects", authorization, async (req, res) => {
-  let projectEndPoints = endPointSchema.find({
+app.post("/getEndpointsOfProjects", async (req, res) => {
+  console.log("Got list req");
+  let projectEndPoints = await endPointSchema.find({
     projectCode: req.body.projectCode,
   });
-
+  console.log(projectEndPoints);
   try {
     if (projectEndPoints.length === 0) {
       return res.status(200).json({
