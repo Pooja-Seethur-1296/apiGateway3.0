@@ -16,7 +16,7 @@ let userSchema = new mongoose.Schema({
   userRole: {
     type: String,
     required: true,
-    enum: ["superAdmin", "admin", "user", "infinteUser"],
+    enum: ["superAdmin", "admin", "user", "infiniteUser"],
   },
   secretKey: { type: String },
   emailId: { type: String, required: true, unique: true },

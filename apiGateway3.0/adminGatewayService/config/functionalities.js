@@ -78,7 +78,6 @@ module.exports = {
                 endPointToken: 1,
                 requestType: 1,
                 endPoint: 1,
-                endPoint: 1,
               },
             },
           ])

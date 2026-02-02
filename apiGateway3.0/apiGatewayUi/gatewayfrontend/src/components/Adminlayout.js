@@ -125,7 +125,7 @@ const Layout = () => {
           <div style={styles.topBarLeft}>
             {/* <h1 style={styles.title}>Dashboard</h1> */}
             <p style={styles.welcomeText}>
-              Welcome, <strong>{formData.name || "User"}</strong> 👋
+              Welcome, <strong>{formData.name || "User"}</strong>
             </p>
           </div>
 

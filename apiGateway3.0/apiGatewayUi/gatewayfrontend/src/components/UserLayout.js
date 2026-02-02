@@ -1,10 +1,10 @@
 import React, { useState, useContext, useEffect } from "react";
 import { Outlet, NavLink } from "react-router-dom";
-import { IconButton, TextField, Button, Stack, MenuItem } from "@mui/material";
+import { IconButton, TextField, Button, Stack } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { AuthContext } from "../context/AuthContext";
 
-const Layout = () => {
+const UserLayout = () => {
   const { user, updateUser } = useContext(AuthContext);
 
   /* Sidebar state */
@@ -88,16 +88,15 @@ const Layout = () => {
 
         <ul style={styles.list}>
           {[
-            { path: "/adminDashboard", label: "Insights Dashboard" },
+            { path: "/userDashboard", label: "Insights" },
             {
-              path: "/adminFileUpload",
-              label: "Bulk upload endpoints to project",
+              path: "/userMappedEps",
+              label: "API details",
             },
             {
-              path: "/projectEndPoints",
-              label: "View project endpoints",
+              path: "/accessEndpoints",
+              label: "Access APIs",
             },
-            { path: "/flushDb", label: "Clear cache database" },
             { path: "/", label: "Logout" },
           ].map((item) => (
             <li key={item.path}>
@@ -304,4 +303,4 @@ const styles = {
   },
 };
 
-export default Layout;
+export default UserLayout;

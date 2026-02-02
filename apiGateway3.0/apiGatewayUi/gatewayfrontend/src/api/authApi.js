@@ -8,6 +8,10 @@ const adminAPI = axios.create({
   baseURL: "http://localhost:2001",
 });
 
+const userAPI = axios.create({
+  baseURL: "http://localhost:2000",
+});
+
 // Attach token automatically
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
@@ -17,6 +21,13 @@ API.interceptors.request.use((req) => {
 
 // Attach token automatically
 adminAPI.interceptors.request.use((req) => {
+  const token = localStorage.getItem("token");
+  if (token) req.headers.Authorization = `Bearer ${token}`;
+  return req;
+});
+
+// Attach token automatically
+userAPI.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
   if (token) req.headers.Authorization = `Bearer ${token}`;
   return req;
@@ -55,4 +66,10 @@ export const uploadFile = (formData, config = {}) => {
 export const mapUserProjectEps = (data) =>
   adminAPI.post("/mapUserEndPoints", data);
 export const flushDatabase = (data) => adminAPI.post("/flushRedis", data);
+
+//User functionalities
+//redundant
+export const externalLogin = (data) => {};
+
+export const reRoute = (data) => userAPI.post("/reRoute", data);
 export default API;

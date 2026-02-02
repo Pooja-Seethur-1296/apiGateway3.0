@@ -1,18 +1,25 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import { AuthProvider } from "./context/AuthContext";
+//Super-admin related routes
 import Layout from "./components/Adminlayout";
 import Subadminlayout from "./components/Subadminlayout";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Project from "./pages/Projects";
 import ProjectMappingWithRole from "./pages/Userprojectmap";
+//Admin related routes
 import Admindashboard from "./pages/adminDashboard";
 import Adminfileupload from "./pages/adminFileUpload";
 import UserManagement from "./pages/Usermanagement";
 import FlushDb from "./pages/clearDatabase";
 import ProjectEndpoints from "./pages/ProjectEps";
-import { AuthProvider } from "./context/AuthContext";
+//User related data
+import UserLayout from "./components/UserLayout";
+import UserDashboard from "./pages/UserDashboard";
+import UserAccessApis from "./pages/UserAccessApis";
+import UserMappedEps from "./pages/UserMappedEps";
 
 export default function App() {
   return (
@@ -21,7 +28,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          {/* Protected / Layout Routes */}
+
+          {/* Protected / Admin Layout Routes */}
           <Route element={<Layout />}>
             <Route
               path="/dashboard"
@@ -50,7 +58,7 @@ export default function App() {
             />
           </Route>
 
-          {/* Protected / Layout Routes */}
+          {/* Protected / Subadmin Layout Routes */}
           <Route element={<Subadminlayout />}>
             <Route
               path="/adminDashboard"
@@ -81,6 +89,34 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <ProjectEndpoints />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
+          {/* Protected / UserLayout Routes */}
+          <Route element={<UserLayout />}>
+            <Route
+              path="/userDashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/userMappedEps"
+              element={
+                <ProtectedRoute>
+                  <UserMappedEps />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/accessEndpoints"
+              element={
+                <ProtectedRoute>
+                  <UserAccessApis />
                 </ProtectedRoute>
               }
             />

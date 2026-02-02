@@ -1,0 +1,49 @@
+services:
+  super_admin_gateway:
+    image: ""
+    container_name: super_admin_gateway
+    ports:
+      - 5001:5001
+    restart: unless-stopped
+    dns:
+      - "8.8.8.8"
+    env_file: ""
+
+  admin_gateway:
+    image: ""
+    container_name: admin_gateway
+    ports:
+      - 2001:2001
+    restart: unless-stopped
+    dns:
+      - "8.8.8.8"
+    env_file: ""
+
+  user_gateway:
+    image: ""
+    container_name: user_gateway
+    ports:
+      - 4001:4001
+    restart: unless-stopped
+    dns:
+      - "8.8.8.8"
+    env_file: ""
+
+  cache_database:
+    image: redis/redis-stack:latest
+    container_name: cache_database
+    restart: unless-stopped
+    command: redis-stack-server --bind 0.0.0.0 --protected-mode no --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "SET test 100",
+          "FT.CREATE proListIdx ON HASH PREFIX 1 productId: SCHEMA productName TEXT productDescription TEXT productImage TEXT productStatus TEXT productLevel TEXT productBasePrice TEXT productPrice TEXT productPercentagePrice TEXT distributorId TEXT distributerName TEXT productStockQuantity TEXT productTotalRatingCount TEXT productAverageRating TEXT productTag TEXT countryCode TEXT country TEXT currency TEXT currencySymbol TEXT",
+        ]
+    ports:
+      # - 6360:6379
+      - ${EXPOSED_REDISUI_PORT}:8001
+    volumes:
+      - /etc/data:/home/dinesh-ots/redis-data
