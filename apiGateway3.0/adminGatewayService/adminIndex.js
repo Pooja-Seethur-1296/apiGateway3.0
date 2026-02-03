@@ -135,29 +135,31 @@ app.post("/uploadFile", upload.single("myFile.xlsx"), uploadXLSX);
  * @description {*} Extracts stored data from mongo DB, based on project code and updates in redis
  */
 
-app.post("/mapUserEndPoints", (req, res) => {
-  console.log(req.body.userId);
-  console.log(req.body.projectCode, req.body.userId);
-  configFunc.mongoAggregate(
-    req.body.projectCode,
-    req.body.userId,
-    (data, error) => {
-      if (error) {
-        res.status(400).send("error in retrieving data");
-      } else {
-        client.hset(req.body.userId, data, (success, setError) => {
-          if (setError) {
-            console.log("setting data in redis error ");
-            console.log(setError);
-          } else {
-            res
-              .status(200)
-              .send({ responseCode: 200, updatedDataInRedis: data });
-          }
-        });
-      }
-    },
-  );
+app.post("/mapUserEndPoints", async (req, res) => {
+  let allUsers = await projectUsers.find({ projectCode: req.body.projectCode });
+
+  allUsers.map((items) => {
+    configFunc.mongoAggregate(
+      req.body.projectCode,
+      items.userId,
+      (data, error) => {
+        if (error) {
+          res.status(400).send("error in retrieving data");
+        } else {
+          client.hset(items.userId, data, (success, setError) => {
+            if (setError) {
+              console.log("setting data in redis error ");
+              console.log(setError);
+            } else {
+              res
+                .status(200)
+                .send({ responseCode: 200, updatedDataInRedis: data });
+            }
+          });
+        }
+      },
+    );
+  });
 });
 
 /**

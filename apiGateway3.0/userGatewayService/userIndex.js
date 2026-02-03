@@ -17,6 +17,7 @@ const authorizeToken = require("./middleWare/authorizeToken");
 const reroute = require("./reroute");
 const REDIS_PORT = 6379;
 const redisApiAccessCount = 30;
+const cors = require("cors");
 //const db = require('./config/connectToDb');
 
 /**
@@ -25,6 +26,13 @@ const redisApiAccessCount = 30;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Configure CORS for a specific origin
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
 
 /**
  * Create redis client and connect
@@ -42,72 +50,76 @@ client.on("connect", function () {
  */
 
 app.post("/reRoute", authorizeToken, (req, res) => {
+  // console.log(JSON.stringify(req.body));
   console.log(
-    `UserId: ${req.body.userId}, API key: ${req.body.apiKey}, Request body: ${req.body.requestBody}, auth token: ${req.headers.authorization}`,
+    `UserId: ${req.body.userId}, API url: ${req.body.url}, Request body: ${req.body.requestBody}, auth token: ${req.headers.authorization}`,
   );
 
-  let reqqType = req.body.apiKey + "reqType";
+  let reqqType = req.body.url + "reqType";
   let authorizationToken = req.headers.authorization;
-  let apiAccessCount = req.body.apiKey + "apiAccessCount";
+  let apiAccessCount = req.body.url + "apiAccessCount";
 
   //get api url from cache db
 
-  client.hget(req.body.userId, req.body.apiKey, (error, apiUrlObj) => {
-    if (error) {
-      return res.send("Error in retrieving redis data");
-    }
+  // client.hget(req.body.userId, req.body.url, (error, apiUrlObj) => {
+  //   if (error) {
+  //     return res.send("Error in retrieving redis data");
+  //   }
 
-    //check api access stats to give access
+  //check api access stats to give access
 
-    client.hget(
-      req.body.userId,
-      apiAccessCount,
-      (apiAccessErr, endPointAccessCount) => {
-        try {
-          if (endPointAccessCount > redisApiAccessCount) {
-            return res.send({
-              responseCode: 401,
-              responseDescription:
-                "API access is restricted, renew API subscription plan again",
-            });
-          } else {
-            //get type of request and redirect
+  client.hget(
+    req.body.userId,
+    apiAccessCount,
+    (apiAccessErr, endPointAccessCount) => {
+      try {
+        if (endPointAccessCount > redisApiAccessCount) {
+          return res.send({
+            responseCode: 401,
+            responseDescription:
+              "API access is restricted, renew API subscription plan again",
+          });
+        } else {
+          //get type of request and redirect
 
-            client.hget(req.body.userId, reqqType, (error, reqTypeObj) => {
-              //call redirect function to redirect incoming request to application server
+          client.hget(req.body.userId, reqqType, (error, reqTypeObj) => {
+            //call redirect function to redirect incoming request to application server
 
-              reroute.redirect(
-                req.body.requestBody,
-                reqTypeObj,
-                apiUrlObj,
-                authorizationToken,
-                (data, error) => {
-                  try {
-                    //increment redis APIAccessCount here
-                    client.hincrby(
-                      req.body.userId,
-                      apiAccessCount,
-                      1,
-                      (incData, incErr) => {
-                        if (incErr) {
-                          //console.log('errrrrrrr '+incErr.body)
-                        }
-                        res.send(data);
-                      },
-                    );
-                  } catch {
-                    return res.send("Error in retrieving redis data" + error);
-                  }
-                },
-              );
-            });
-          }
-        } catch (error) {
-          return res.send("Error in retrieving redis data");
+            reroute.redirect(
+              req.body.requestBody,
+              reqTypeObj,
+              req.body.url,
+              authorizationToken,
+              (data, error) => {
+                console.log("data bantu kanro");
+                console.log(data);
+                try {
+                  //increment redis APIAccessCount here
+                  client.hincrby(
+                    req.body.userId,
+                    apiAccessCount,
+                    1,
+                    (incData, incErr) => {
+                      if (incErr) {
+                        //console.log('err '+incErr.body)
+                      }
+                      return res.status(200).json(data);
+                    },
+                  );
+                } catch {
+                  return res.send(error);
+                  // return res.send("Error in retrieving redis data" + error);
+                }
+              },
+            );
+          });
         }
-      },
-    );
-  });
+      } catch (error) {
+        return res.send("Error in retrieving redis data");
+      }
+    },
+  );
+  // });
 });
 
 /**

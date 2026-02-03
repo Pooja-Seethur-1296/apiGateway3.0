@@ -27,6 +27,19 @@ module.exports = {
    */
 
   feedToMongoDb: async (data, callback) => {
+    //check if project has already endpoints, if they have delete
+    let deleteData = await endPointSchema.deleteMany({});
+    try {
+      if (deleteData.deletedCount === 0) {
+        callback(result);
+        return;
+      } else {
+        callback(result);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+
     //map data to generate apikey
 
     let apiKey = data.map((obj) => ({
@@ -34,15 +47,6 @@ module.exports = {
       endPointToken: module.exports.generateApiKey(obj.projectCode),
     }));
 
-    //check if project has already endpoints, if they have delete
-    let deleteData = endPointSchema
-      .deleteMany(apiKey)
-      .then((result) => {
-        callback(result);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
     //insert to db
 
     endPointSchema
@@ -85,14 +89,26 @@ module.exports = {
             console.log(result);
 
             let redisDataUpdate = [];
+
+            // for (let i = 0; i < result.length; i++) {
+            //   let typeOfRequest = result[i].endPointToken + "reqType";
+            //   let endPointKey = result[i].endPointToken;
+            //   let apiAccessData = result[i].endPointToken + "apiAccessCount";
+            //   redisDataUpdate.push(typeOfRequest, result[i].requestType);
+            //   redisDataUpdate.push(endPointKey, result[i].endPoint);
+            //   redisDataUpdate.push(apiAccessData, 0);
+            // }
+
+            //Instead of token, we retrieve based on URLs
             for (let i = 0; i < result.length; i++) {
-              let typeOfRequest = result[i].endPointToken + "reqType";
-              let endPointKey = result[i].endPointToken;
-              let apiAccessData = result[i].endPointToken + "apiAccessCount";
+              let typeOfRequest = result[i].endPoint + "reqType";
+              let endPointKey = result[i].endPoint;
+              let apiAccessData = result[i].endPoint + "apiAccessCount";
               redisDataUpdate.push(typeOfRequest, result[i].requestType);
-              redisDataUpdate.push(endPointKey, result[i].endPoint);
+              redisDataUpdate.push(endPointKey, result[i].endPointToken);
               redisDataUpdate.push(apiAccessData, 0);
             }
+
             console.log(redisDataUpdate);
             callback(redisDataUpdate);
           })
