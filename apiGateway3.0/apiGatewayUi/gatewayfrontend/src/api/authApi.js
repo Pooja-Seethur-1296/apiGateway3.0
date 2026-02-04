@@ -19,12 +19,39 @@ API.interceptors.request.use((req) => {
   return req;
 });
 
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/"; // redirect to login
+      alert("Session expired. Please login again.");
+    }
+    return Promise.reject(error);
+  },
+);
 // Attach token automatically
 adminAPI.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
   if (token) req.headers.Authorization = `Bearer ${token}`;
   return req;
 });
+
+adminAPI.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/"; // redirect to login
+      alert("Session expired. Please login again.");
+    }
+    return Promise.reject(error);
+  },
+);
 
 // Attach token automatically
 userAPI.interceptors.request.use((req) => {
@@ -33,6 +60,19 @@ userAPI.interceptors.request.use((req) => {
   return req;
 });
 
+userAPI.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/"; // redirect to login
+      alert("Session expired. Please login again.");
+    }
+    return Promise.reject(error);
+  },
+);
 //Super Admin functionalities
 
 export const loginUser = (data) => API.post("/user/login", data);
@@ -66,6 +106,8 @@ export const uploadFile = (formData, config = {}) => {
 export const mapUserProjectEps = (data) =>
   adminAPI.post("/mapUserEndPoints", data);
 export const flushDatabase = (data) => adminAPI.post("/flushRedis", data);
+export const getAPIAccessStatistics = (data) =>
+  adminAPI.post("/getApiAccessCount", data);
 
 //User functionalities
 //redundant

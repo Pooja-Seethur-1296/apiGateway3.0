@@ -185,6 +185,11 @@ router.post("/modifyProjectsOfUser", checkAuth, (req, res) => {
   // }
 });
 
+/***************************************************************
+ * name : getProjectsOfUser
+ * description: gets projects mapped to the user
+ ***************************************************************/
+
 router.post("/getProjectsOfUser", checkAuth, async (req, res) => {
   let resData = await projectUserDetail.find({ userId: req.body.userId });
   if (resData.length === 0) {

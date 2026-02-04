@@ -21,6 +21,7 @@ const endPointSchema = require("./model/endPointList");
 const Users = require("./model/user");
 const projectUsers = require("./model/projectUsers");
 const cors = require("cors");
+const { promisify } = require("util");
 
 /**
  * connect to mongo db
@@ -40,6 +41,7 @@ app.use(
  */
 
 const client = redis.createClient(6379);
+const hgetAsync = promisify(client.hget).bind(client);
 // const client = createClient({
 //   url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST_NAME}:6379`,
 // });
@@ -144,14 +146,17 @@ app.post("/mapUserEndPoints", async (req, res) => {
       items.userId,
       (data, error) => {
         if (error) {
-          res.status(400).send("error in retrieving data");
+          return res.status(400).send("error in retrieving data");
         } else {
           client.hset(items.userId, data, (success, setError) => {
             if (setError) {
               console.log("setting data in redis error ");
               console.log(setError);
+              return res
+                .status(200)
+                .send({ responseCode: 200, updatedDataInRedis: setError });
             } else {
-              res
+              return res
                 .status(200)
                 .send({ responseCode: 200, updatedDataInRedis: data });
             }
@@ -242,10 +247,17 @@ app.post("/apiAccessCountReset", authorize, (req, res) => {
  * @description: gets all the endpoints mapped to the user
  */
 app.post("/getEndpointsOfProjects", async (req, res) => {
-  console.log("Got list req");
-  let projectEndPoints = await endPointSchema.find({
-    projectCode: req.body.projectCode,
-  });
+  var query = {};
+  if (req.body.projectCode) {
+    query = {
+      projectCode: req.body.projectCode,
+    };
+  } else {
+    query = {};
+  }
+  console.log(req.body.projectCode);
+  console.log("Got list getEndpointsOfProjects");
+  let projectEndPoints = await endPointSchema.find(query);
   console.log(projectEndPoints);
   try {
     if (projectEndPoints.length === 0) {
@@ -257,11 +269,83 @@ app.post("/getEndpointsOfProjects", async (req, res) => {
     } else {
       return res.status(200).json({
         responseCode: 200,
-        responseDescription: "Endpoints are mapped project: ",
+        responseDescription: "Endpoints of the project ",
         responseObject: projectEndPoints,
       });
     }
   } catch (err) {}
+});
+
+/**
+ * Get API access count per endpoints per user
+ */
+
+app.post("/getApiAccessCount", async (req, res) => {
+  let endpointsListOfUser = await endPointSchema.find(
+    {
+      projectCode: req.body.projectCode,
+    },
+    { endPoint: 1, endPointToken: 1 },
+  );
+
+  const finalData = await Promise.all(
+    endpointsListOfUser.map(async (item) => {
+      const val = await hgetAsync(
+        req.body.userId,
+        `${item.endPoint}apiAccessCount`,
+      );
+
+      return {
+        endPoint: item.endPoint,
+        apiToken: item.endPointToken,
+        apiAccessCount: Number(val) || 0,
+      };
+    }),
+  );
+
+  console.log(finalData);
+  res.status(200).send({
+    responseCode: 200,
+    responseDescription: "Api access statistics per user",
+    responseObject: finalData,
+  });
+});
+
+//super admin functionality
+
+/**
+ * Get API access count per endpoints per user
+ */
+
+app.post("/getApiAccessCountForProjects", async (req, res) => {
+  let projectsLists = await pr;
+  let endpointsListOfUser = await endPointSchema.find(
+    {
+      projectCode: req.body.projectCode,
+    },
+    { endPoint: 1, endPointToken: 1, projectCode: 1 },
+  );
+
+  const finalData = await Promise.all(
+    endpointsListOfUser.map(async (item) => {
+      const val = await hgetAsync(
+        req.body.userId,
+        `${item.endPoint}apiAccessCount`,
+      );
+
+      return {
+        projectCode: item.projectCode,
+        apiAccessCount: Number(val) || 0,
+      };
+    }),
+  );
+
+  console.log(finalData);
+  res.status(200).send({
+    responseCode: 200,
+    responseDescription: "Api access statistics per user",
+    responseObject: finalData,
+  });
 });
 /**
  * start express server at port 2001

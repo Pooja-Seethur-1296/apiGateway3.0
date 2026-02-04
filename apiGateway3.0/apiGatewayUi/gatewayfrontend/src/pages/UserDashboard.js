@@ -1,91 +1,193 @@
-import React, { useState, useContext, useEffect } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { getUserList, getProjectList } from "../api/authApi";
+import React, { useEffect, useState, useContext } from "react";
 import {
-  PieChart,
-  Pie,
-  Cell,
   BarChart,
   Bar,
   XAxis,
+  YAxis,
   Tooltip,
   ResponsiveContainer,
+  Cell,
+  PieChart,
+  Pie,
 } from "recharts";
+import { TextField, MenuItem, Paper, Typography } from "@mui/material";
+import {
+  getAPIAccessStatistics,
+  getProjectsMappedToUser,
+} from "../api/authApi";
+import { AuthContext } from "../context/AuthContext";
+
+const COLORS = [
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#facc15",
+];
 
 const UserDashboard = () => {
   const { user } = useContext(AuthContext);
+  const [chartData, setChartData] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProject, setSelectedProject] = useState("");
 
-  const [usersCount, setUsersCount] = useState(0);
-  const [projectsCount, setProjectsCount] = useState(0);
-
+  // Fetch user projects
   useEffect(() => {
-    fetchData();
+    if (!user?.userId) return;
+    const fetchProjects = async () => {
+      try {
+        const res = await getProjectsMappedToUser({ userId: user.userId });
+        const projList = res.data.responseObject || [];
+        setProjects(projList);
+        if (projList.length) setSelectedProject(projList[0].projectCode);
+      } catch (err) {
+        console.error("Failed to fetch projects", err);
+      }
+    };
+    fetchProjects();
   }, [user]);
 
-  const fetchData = async () => {
-    try {
-      const usersRes = await getUserList();
-      setUsersCount(usersRes.data.responseObject.users.length);
-
-      const projectsRes = await getProjectList();
-      setProjectsCount(projectsRes.data.responseObject.projects.length);
-    } catch (err) {
-      console.error("Failed to fetch data", err);
-    }
-  };
-
-  const pieData = [
-    { name: "Users", value: usersCount },
-    { name: "Projects", value: projectsCount },
-  ];
-
-  const barData = [
-    { name: "Users", count: usersCount },
-    { name: "Projects", count: projectsCount },
-  ];
+  // Fetch API stats whenever project changes
+  useEffect(() => {
+    if (!user?.userId || !selectedProject) return;
+    const fetchStats = async () => {
+      try {
+        const res = await getAPIAccessStatistics({
+          userId: user.userId,
+          projectCode: selectedProject,
+        });
+        const data = res.data.responseObject || [];
+        const formatted = data
+          .map((item) => ({
+            token: item.apiToken,
+            count: item.apiAccessCount,
+          }))
+          .sort((a, b) => b.count - a.count);
+        setChartData(formatted);
+      } catch (err) {
+        console.error("Failed to fetch API stats", err);
+      }
+    };
+    fetchStats();
+  }, [user, selectedProject]);
 
   return (
-    <div style={styles.grid}>
-      {/* Pie Chart */}
-      <div style={styles.chartCard}>
-        <h4>Users vs Projects</h4>
-        <ResponsiveContainer width="100%" height={250}>
-          <PieChart>
-            <Pie data={pieData} dataKey="value" outerRadius={90} label>
-              <Cell fill="#2563eb" />
-              <Cell fill="#16a34a" />
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+    <div style={styles.container}>
+      {/* Header */}
+      <Typography variant="h6" gutterBottom>
+        API Usage Dashboard
+      </Typography>
 
-      {/* Bar Chart */}
-      <div style={styles.chartCard}>
-        <h4>Overview</h4>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={barData}>
-            <XAxis dataKey="name" />
-            <Tooltip />
-            <Bar dataKey="count" fill="#2563eb" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      {/* Project selector */}
+      <TextField
+        select
+        label="Select Project"
+        value={selectedProject}
+        onChange={(e) => setSelectedProject(e.target.value)}
+        fullWidth
+        sx={{ mb: 4 }}
+      >
+        {projects.map((p) => (
+          <MenuItem key={p.projectId} value={p.projectCode}>
+            {p.projectName}
+          </MenuItem>
+        ))}
+      </TextField>
+
+      {/* Charts grid */}
+      <div style={styles.grid}>
+        {/* Bar chart */}
+        <Paper style={styles.chartCard}>
+          <Typography variant="h7" gutterBottom>
+            API Usage by Token
+          </Typography>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={chartData}>
+              <XAxis
+                dataKey="token"
+                interval={0}
+                angle={-35}
+                textAnchor="end"
+                height={70}
+                tick={{ fontSize: 12, fill: "#374151" }}
+              />
+              <YAxis
+                allowDecimals={false}
+                domain={[0, (max) => Math.max(max, 5)]}
+                tick={{ fontSize: 12, fill: "#6b7280" }}
+              />
+              <Tooltip
+                cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                formatter={(val) => [`${val}`, "Access Count"]}
+              />
+              <Bar dataKey="count" radius={[6, 6, 0, 0]} minPointSize={6}>
+                {chartData.map((entry, idx) => (
+                  <Cell
+                    key={idx}
+                    fill={
+                      entry.count === 0
+                        ? "#e5e7eb"
+                        : COLORS[idx % COLORS.length]
+                    }
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </Paper>
+
+        {/* Pie chart */}
+        <Paper style={styles.chartCard}>
+          <Typography variant="h7" gutterBottom>
+            API Usage Distribution
+          </Typography>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={chartData}
+                dataKey="count"
+                nameKey="token"
+                innerRadius={60}
+                outerRadius={100}
+                label
+              >
+                {chartData.map((entry, idx) => (
+                  <Cell
+                    key={idx}
+                    fill={
+                      entry.count === 0
+                        ? "#e5e7eb"
+                        : COLORS[idx % COLORS.length]
+                    }
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </Paper>
       </div>
     </div>
   );
 };
 
 const styles = {
+  container: {
+    padding: 24,
+    fontFamily: "Inter, sans-serif",
+  },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-    gap: 20,
+    gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+    gap: 24,
   },
   chartCard: {
-    background: "#ffffff",
     padding: 20,
-    borderRadius: 14,
-    boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+    borderRadius: 12,
+    boxShadow: "0 4px 15px rgba(0,0,0,0.08)",
+    backgroundColor: "#fff",
   },
 };
 

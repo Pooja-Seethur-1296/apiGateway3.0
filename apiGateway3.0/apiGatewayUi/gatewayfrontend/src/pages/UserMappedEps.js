@@ -87,6 +87,28 @@ const UserMappedEps = () => {
     fetchEndpoints();
   }, [selectedProject]);
 
+  const cellStyle = {
+    maxWidth: 180,
+    whiteSpace: "normal",
+    wordBreak: "break-word",
+    fontSize: "0.85rem",
+    verticalAlign: "top",
+  };
+
+  const scrollBox = {
+    maxHeight: 120,
+    overflowY: "auto",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+    fontFamily: "monospace",
+    fontSize: "0.75rem",
+    lineHeight: 1.4,
+    border: "1px solid #e0e0e0",
+    borderRadius: 1,
+    padding: 1,
+    backgroundColor: "#ffffff",
+  };
+
   return (
     <Box sx={{ p: 4, maxWidth: 1400, mx: "auto" }}>
       <Typography variant="h5" mb={3}>
@@ -113,116 +135,83 @@ const UserMappedEps = () => {
 
       {/* ENDPOINT TABLE */}
       {selectedProject && (
-        <Paper elevation={1}>
-          <TableContainer sx={{ maxHeight: 520 }}>
-            <Table stickyHeader size="small">
-              <TableHead>
-                <TableRow>
-                  {[
-                    "Endpoint",
-                    "Method",
-                    "Token",
-                    "Project",
-                    "Sample Request",
-                    "Description",
-                  ].map((h) => (
-                    <TableCell
-                      key={h}
-                      sx={{
-                        fontWeight: 700,
-                        backgroundColor: "#f8fafc",
-                        fontSize: "0.8rem",
-                      }}
-                    >
-                      {h}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                {[
+                  // "Endpoint",
+                  "API Token",
+                  "Project Code",
+                  "Request Type",
+                  "Sample Request",
+                  "Description",
+                ].map((header) => (
+                  <TableCell
+                    key={header}
+                    sx={{
+                      fontWeight: 600,
+                      backgroundColor: "#f1f5f9",
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                    }}
+                  >
+                    {header}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
 
-              <TableBody>
-                {endpoints.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      No endpoints available for this project
+            <TableBody>
+              {endpoints.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center">
+                    No endpoints available for this project
+                  </TableCell>
+                </TableRow>
+              ) : (
+                endpoints.map((ep, idx) => (
+                  <TableRow
+                    key={idx}
+                    sx={{
+                      "&:hover": { backgroundColor: "#f9fafb" },
+                    }}
+                  >
+                    {/* Endpoint */}
+                    {/* <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.endPoint}</Box>
+                    </TableCell> */}
+
+                    {/* Token */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.endPointToken}</Box>
+                    </TableCell>
+
+                    {/* Project Code */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.projectCode}</Box>
+                    </TableCell>
+
+                    {/* Request Type */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.requestType}</Box>
+                    </TableCell>
+
+                    {/* Sample Request */}
+                    <TableCell sx={{ maxWidth: 360, p: 1 }}>
+                      <Box sx={scrollBox}>{ep.sampleRequestSchema || "-"}</Box>
+                    </TableCell>
+
+                    {/* Description */}
+                    <TableCell sx={cellStyle}>
+                      <Box sx={cellStyle}>{ep.description || "-"}</Box>
                     </TableCell>
                   </TableRow>
-                ) : (
-                  endpoints.map((ep, idx) => {
-                    const color = methodColor(ep.requestType);
-
-                    return (
-                      <TableRow
-                        key={idx}
-                        hover
-                        sx={{
-                          backgroundColor:
-                            idx % 2 === 0 ? "#fafafa" : "inherit",
-                        }}
-                      >
-                        {/* Endpoint */}
-                        <TableCell sx={cellStyle}>
-                          <Box
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.8rem",
-                              wordBreak: "break-all",
-                            }}
-                          >
-                            {ep.endPoint}
-                          </Box>
-                        </TableCell>
-
-                        {/* Method */}
-                        <TableCell sx={cellStyle}>
-                          <Box
-                            sx={{
-                              display: "inline-block",
-                              px: 1,
-                              py: 0.3,
-                              borderRadius: 1,
-                              fontSize: "0.7rem",
-                              fontWeight: 700,
-                              backgroundColor: color.bg,
-                              color: color.color,
-                            }}
-                          >
-                            {ep.requestType}
-                          </Box>
-                        </TableCell>
-
-                        {/* Token */}
-                        <TableCell sx={cellStyle}>
-                          <Typography
-                            variant="caption"
-                            sx={{ wordBreak: "break-all" }}
-                          >
-                            {ep.endPointToken}
-                          </Typography>
-                        </TableCell>
-
-                        {/* Project */}
-                        <TableCell sx={cellStyle}>{ep.projectCode}</TableCell>
-
-                        {/* Sample Request */}
-                        <TableCell sx={{ minWidth: 360 }}>
-                          <Box sx={codeBox}>
-                            {ep.sampleRequestSchema || "-"}
-                          </Box>
-                        </TableCell>
-
-                        {/* Description */}
-                        <TableCell sx={cellStyle}>
-                          {ep.description || "-"}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
     </Box>
   );

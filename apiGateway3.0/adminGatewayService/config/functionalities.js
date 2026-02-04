@@ -28,17 +28,20 @@ module.exports = {
 
   feedToMongoDb: async (data, callback) => {
     //check if project has already endpoints, if they have delete
-    let deleteData = await endPointSchema.deleteMany({});
-    try {
-      if (deleteData.deletedCount === 0) {
-        callback(result);
-        return;
-      } else {
-        callback(result);
-      }
-    } catch (err) {
-      console.log(err);
-    }
+    let deleteData = await endPointSchema.deleteMany({
+      projectCode: data.projectCode,
+    });
+    // try {
+    //   if (deleteData.deletedCount === 0) {
+    //     console.log("Data already not found");
+    //     // callback(deleteData);
+    //     return;
+    //   } else {
+    //     // callback(deleteData);
+    //   }
+    // } catch (err) {
+    //   console.log(err);
+    // }
 
     //map data to generate apikey
 
