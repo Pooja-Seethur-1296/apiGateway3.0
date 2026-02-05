@@ -317,17 +317,14 @@ app.post("/getApiAccessCount", async (req, res) => {
  * Get API access count per endpoints per user
  */
 
-app.post("/getApiAccessCountForProjects", async (req, res) => {
-  let projectsLists = await pr;
-  let endpointsListOfUser = await endPointSchema.find(
-    {
-      projectCode: req.body.projectCode,
-    },
+app.post("/getApiCountForAllProjects", async (req, res) => {
+  let allEpAccess = await endPointSchema.find(
+    {},
     { endPoint: 1, endPointToken: 1, projectCode: 1 },
   );
 
   const finalData = await Promise.all(
-    endpointsListOfUser.map(async (item) => {
+    allEpAccess.map(async (item) => {
       const val = await hgetAsync(
         req.body.userId,
         `${item.endPoint}apiAccessCount`,

@@ -1,11 +1,7 @@
 import React, { useState, useContext, useEffect } from "react";
 import { TextField, Button, Stack, MenuItem } from "@mui/material";
 import { AuthContext } from "../context/AuthContext";
-import {
-  getUserList,
-  getProjectList,
-  getProjectsMappedToUser,
-} from "../api/authApi";
+import { getProjectsMappedToUser, allAPIAccessPerAdmin } from "../api/authApi";
 
 import {
   BarChart,
@@ -14,32 +10,25 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
   CartesianGrid,
+  RadialBarChart,
+  RadialBar,
+  PolarAngleAxis,
 } from "recharts";
 
 const Admindashboard = () => {
   const { user, updateUser } = useContext(AuthContext);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [maxEndpointUsage, setMaxEndpointUsage] = useState(0);
+  const [apiAccessData, setApiAccessData] = useState([]);
+  const [mappedProjects, setMappedProjects] = useState([]);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     userRole: "",
   });
-
-  const [usersCount, setUsersCount] = useState(0);
-  const [projectsCount, setProjectsCount] = useState(0);
-  const [mappedProjects, setMappedProjects] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState("");
-
-  // Mock endpoint access percentage
-  const [endpointPercentage, setEndpointPercentage] = useState(80);
 
   useEffect(() => {
     if (user) {
@@ -48,30 +37,42 @@ const Admindashboard = () => {
         email: user.email || "",
         userRole: user.userRole,
       });
+
       fetchMappedProjects();
-      fetchCounts();
+      fetchApiAccessStats();
     }
   }, [user]);
 
   const fetchMappedProjects = async () => {
     try {
       const res = await getProjectsMappedToUser({ userId: user.userId });
-      setMappedProjects(res.data.responseObject);
+      setMappedProjects(res.data.responseObject || []);
     } catch (err) {
       console.error("Failed to fetch mapped projects", err);
     }
   };
 
-  const fetchCounts = async () => {
+  const fetchApiAccessStats = async () => {
     try {
-      const usersRes = await getUserList();
-      setUsersCount(usersRes.data.responseObject.users.length);
+      const apiRes = await allAPIAccessPerAdmin({ userId: user.userId });
+      const data = apiRes?.data?.responseObject || [];
 
-      const projectsRes = await getProjectList();
-      setProjects(projectsRes.data.responseObject.projects);
-      setProjectsCount(projectsRes.data.responseObject.projects.length);
+      // Aggregate by projectCode
+      const aggregated = data.reduce((acc, item) => {
+        acc[item.projectCode] = {
+          projectCode: item.projectCode,
+          apiAccessCount:
+            (acc[item.projectCode]?.apiAccessCount || 0) + item.apiAccessCount,
+        };
+        return acc;
+      }, {});
+
+      setApiAccessData(Object.values(aggregated));
+
+      const counts = data.map((item) => item.apiAccessCount);
+      setMaxEndpointUsage(counts.length ? Math.max(...counts) : 0);
     } catch (err) {
-      console.error("Failed to fetch counts", err);
+      console.error("Failed to fetch API access stats", err);
     }
   };
 
@@ -83,104 +84,84 @@ const Admindashboard = () => {
     setIsEditing(false);
   };
 
-  // Chart Data
-  const overviewData = [
-    { name: "Users", value: usersCount },
-    { name: "Projects", value: projectsCount },
+  const maxUsageChartData = [
+    {
+      name: "Max Usage",
+      value: maxEndpointUsage,
+      fill: "#6366f1",
+    },
   ];
-
-  const endpointData = [
-    { name: "Used", value: endpointPercentage },
-    { name: "Unused", value: 100 - endpointPercentage },
-  ];
-
-  const totalEndpointsData = [
-    { name: "Jan", endpoints: 20 },
-    { name: "Feb", endpoints: 35 },
-    { name: "Mar", endpoints: 50 },
-    { name: "Apr", endpoints: 60 },
-    { name: "May", endpoints: 75 },
-  ];
-
-  const COLORS = ["#22c55e", "#e5e7eb"]; // Pie chart colors
 
   return (
     <>
-      {/* Project Selector */}
-      <div style={{ maxWidth: 320, marginBottom: 24 }}>
-        <TextField
-          select
-          fullWidth
-          size="small"
-          label="Select Project"
-          value={selectedProject}
-          onChange={(e) => setSelectedProject(e.target.value)}
-        >
-          {mappedProjects.map((project) => (
-            <MenuItem key={project.projectId} value={project.projectCode}>
-              {project.projectName}
-            </MenuItem>
-          ))}
-        </TextField>
+      {/* API Access Per Project */}
+      <div style={styles.chartCard}>
+        <h4 style={{ marginBottom: 16 }}>API Access Per Project</h4>
+
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={apiAccessData}>
+            <defs>
+              <linearGradient id="apiGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#60a5fa" />
+              </linearGradient>
+            </defs>
+
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="projectCode" />
+            <YAxis allowDecimals={false} />
+            <Tooltip />
+            <Bar
+              dataKey="apiAccessCount"
+              fill="url(#apiGradient)"
+              radius={[10, 10, 0, 0]}
+              barSize={48}
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
-      {/* Charts */}
-      <div style={styles.chartsGrid}>
-        {/* Bar Chart */}
-        {/* <div style={styles.chartCard}>
-          <h4>Users vs Projects</h4>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={overviewData}>
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="value" fill="#2563eb" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div> */}
+      {/* Maximum Endpoint Usage */}
+      <div style={styles.chartCard}>
+        <h4 style={{ marginBottom: 16 }}>Maximum Endpoint Usage</h4>
 
-        {/* Pie Chart */}
-        <div style={styles.chartCard}>
-          <h4>Endpoint Access %</h4>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie
-                data={endpointData}
-                dataKey="value"
-                innerRadius={60}
-                outerRadius={90}
-                paddingAngle={2}
-              >
-                {endpointData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <ResponsiveContainer width="100%" height={280}>
+          <RadialBarChart
+            innerRadius="70%"
+            outerRadius="100%"
+            data={maxUsageChartData}
+            startAngle={90}
+            endAngle={-270}
+          >
+            <PolarAngleAxis
+              type="number"
+              domain={[0, Math.max(10, maxEndpointUsage)]}
+              tick={false}
+            />
 
-        {/* Line Chart */}
-        <div style={styles.chartCard}>
-          <h4>Total Endpoints Growth</h4>
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={totalEndpointsData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="endpoints"
-                stroke="#2563eb"
-                strokeWidth={3}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+            <RadialBar background clockWise dataKey="value" cornerRadius={10} />
+
+            <text
+              x="50%"
+              y="50%"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              style={{ fontSize: 28, fontWeight: 600, fill: "#111827" }}
+            >
+              {maxEndpointUsage}
+            </text>
+
+            <text
+              x="50%"
+              y="58%"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              style={{ fontSize: 14, fill: "#6b7280" }}
+            >
+              Peak Calls
+            </text>
+          </RadialBarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* Edit Profile Modal */}
@@ -233,16 +214,12 @@ const Admindashboard = () => {
 };
 
 const styles = {
-  chartsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-    gap: 20,
-  },
   chartCard: {
     backgroundColor: "#fff",
-    padding: 20,
+    padding: 24,
     borderRadius: 16,
     boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+    marginBottom: 24,
   },
   modalOverlay: {
     position: "fixed",

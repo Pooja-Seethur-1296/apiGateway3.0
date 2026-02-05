@@ -108,6 +108,8 @@ export const mapUserProjectEps = (data) =>
 export const flushDatabase = (data) => adminAPI.post("/flushRedis", data);
 export const getAPIAccessStatistics = (data) =>
   adminAPI.post("/getApiAccessCount", data);
+export const allAPIAccessPerAdmin = (data) =>
+  adminAPI.post("/getApiCountForAllProjects", data);
 
 //User functionalities
 //redundant
