@@ -76,7 +76,7 @@ const UserDashboard = () => {
   return (
     <div style={styles.container}>
       {/* Header */}
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h5" mb={3} gutterBottom>
         API Usage Dashboard
       </Typography>
 

@@ -143,10 +143,12 @@ const UserManagement = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Email</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Role</TableCell>
+              <TableCell sx={{ fontWeight: 550 }} align="right">
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
 

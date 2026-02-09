@@ -53,7 +53,7 @@ const Project = () => {
           name: p.projectName,
           code: p.projectCode,
           description: p.description,
-        })
+        }),
       );
 
       setProjects(normalizedProjects);
@@ -166,7 +166,7 @@ const Project = () => {
 
   return (
     <Box sx={{ p: 4, fontFamily: "Inter, sans-serif" }}>
-      <Typography variant="h4" fontWeight={600} mb={3}>
+      <Typography variant="h5" mb={3}>
         Project Management
       </Typography>
 
@@ -187,10 +187,10 @@ const Project = () => {
         <Table>
           <TableHead sx={{ backgroundColor: "#f4f6f8" }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Project Code</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Project Name</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
-              <TableCell sx={{ fontWeight: 600, textAlign: "center" }}>
+              <TableCell sx={{ fontWeight: 550 }}>Project Code</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Project Name</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Description</TableCell>
+              <TableCell sx={{ fontWeight: 550, textAlign: "center" }}>
                 Actions
               </TableCell>
             </TableRow>

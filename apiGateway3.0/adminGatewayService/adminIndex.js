@@ -318,30 +318,40 @@ app.post("/getApiAccessCount", async (req, res) => {
  */
 
 app.post("/getApiCountForAllProjects", async (req, res) => {
-  let allEpAccess = await endPointSchema.find(
-    {},
-    { endPoint: 1, endPointToken: 1, projectCode: 1 },
-  );
+  console.log("req bantu");
+  let allUsers = await projectUsers.find({}, { userId: 1, projectCode: 1 });
 
-  const finalData = await Promise.all(
-    allEpAccess.map(async (item) => {
-      const val = await hgetAsync(
-        req.body.userId,
-        `${item.endPoint}apiAccessCount`,
-      );
+  let allEpAccess = (
+    await Promise.all(
+      allUsers.map(async (element) => {
+        let epOfUsers = await endPointSchema.find(
+          { projectCode: element.projectCode },
+          { endPoint: 1, endPointToken: 1, projectCode: 1 },
+        );
 
-      return {
-        projectCode: item.projectCode,
-        apiAccessCount: Number(val) || 0,
-      };
-    }),
-  );
+        const finalData = await Promise.all(
+          epOfUsers.map(async (item) => {
+            const val = await hgetAsync(
+              element.userId,
+              `${item.endPoint}apiAccessCount`,
+            );
 
-  console.log(finalData);
+            return {
+              projectCode: item.projectCode,
+              apiAccessCount: Number(val) || 0,
+            };
+          }),
+        );
+        return finalData;
+      }),
+    )
+  ).flat();
+  console.log(JSON.stringify(allEpAccess));
+
   res.status(200).send({
     responseCode: 200,
-    responseDescription: "Api access statistics per user",
-    responseObject: finalData,
+    responseDescription: "Total API access statistics",
+    responseObject: allEpAccess,
   });
 });
 /**

@@ -81,7 +81,10 @@ const FlushDb = () => {
 
   return (
     <Stack spacing={3} sx={{ maxWidth: 400 }}>
-      <Typography variant="h6">Clear Project Cache</Typography>
+      <Typography variant="h5" mb={3}>
+        Clear Project Cache
+      </Typography>
+
       {alert.show && (
         <Alert
           sx={{ mb: 2 }}

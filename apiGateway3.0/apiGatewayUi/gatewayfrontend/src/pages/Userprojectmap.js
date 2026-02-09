@@ -147,8 +147,8 @@ const ProjectMappingWithRole = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Typography variant="h4" mb={3}>
-        User → Project Mapping
+      <Typography variant="h5" mb={3}>
+        User To Project Mapping
       </Typography>
 
       {alert.show && (
@@ -221,9 +221,9 @@ const ProjectMappingWithRole = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Project Name</TableCell>
-              <TableCell>Assigned</TableCell>
-              <TableCell>User Role</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Project Name</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>Assigned</TableCell>
+              <TableCell sx={{ fontWeight: 550 }}>User Role</TableCell>
             </TableRow>
           </TableHead>
 
