@@ -30,7 +30,7 @@ app.use(bodyParser.json());
 // Configure CORS for a specific origin
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "*",
   }),
 );
 
