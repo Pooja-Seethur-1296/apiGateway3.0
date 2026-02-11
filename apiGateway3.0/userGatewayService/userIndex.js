@@ -10,7 +10,7 @@
  */
 
 const express = require("express");
-const redis = require("redis");
+const { createClient } = require("redis");
 const app = express();
 const bodyParser = require("body-parser");
 const authorizeToken = require("./middleWare/authorizeToken");
