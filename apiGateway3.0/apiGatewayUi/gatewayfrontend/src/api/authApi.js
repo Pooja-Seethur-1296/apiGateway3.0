@@ -1,15 +1,15 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5492",
+  baseURL: "http://super_admin_gateway:5492",
 });
 
 const adminAPI = axios.create({
-  baseURL: "http://localhost:5494",
+  baseURL: "http://admin_gateway:5494",
 });
 
 const userAPI = axios.create({
-  baseURL: "http://localhost:5496",
+  baseURL: "http://user_gateway:5496",
 });
 
 // Attach token automatically
