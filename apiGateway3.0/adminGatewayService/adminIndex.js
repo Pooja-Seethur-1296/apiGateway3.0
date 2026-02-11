@@ -40,7 +40,9 @@ app.use(
  * Include middlewares
  */
 
-const client = redis.createClient(6379);
+const client = createClient({
+  url: "redis://:xuRedOts78D!@cache_database:6379",
+});
 const hgetAsync = promisify(client.hget).bind(client);
 // const client = createClient({
 //   url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST_NAME}:6379`,

@@ -38,7 +38,11 @@ app.use(
  * Create redis client and connect
  */
 
-const client = redis.createClient(REDIS_PORT);
+const client = createClient({
+  url: "redis://:xuRedOts78D!@cache_database:6379",
+});
+
+// const client = redis.createClient(REDIS_PORT);
 
 client.on("connect", function () {
   console.log("Connected!");
