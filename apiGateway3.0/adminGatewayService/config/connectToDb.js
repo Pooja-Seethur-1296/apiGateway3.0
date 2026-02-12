@@ -15,7 +15,7 @@ const mongoose = require("mongoose");
  */
 
 module.exports.connect = (error) => {
-  mongoose.connect("mongodb://mongodb:26045/apiGatewayDataBase", {
+  mongoose.connect("mongodb://mongodb:27017/apiGatewayDataBase", {
     // Connecting to actual API gateway database
     useNewUrlParser: true,
     useUnifiedTopology: true,
